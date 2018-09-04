@@ -3,6 +3,6 @@ version: '1.0'
 steps:
   GetPods:
     title: 'Get pods from cluster integrated in Codefresh'
-    image: codefresh/kube-helm:master
+    image: jpkroehling/kube-helm:latest
     commands:
       - make e2e-tests
