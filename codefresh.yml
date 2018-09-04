@@ -1,0 +1,10 @@
+version: '1.0'
+
+steps:
+  GetPods:
+    title: 'Get pods from cluster integrated in Codefresh'
+    image: codefresh/kube-helm:master
+    commands:
+      - kubectl config get-contexts
+      - kubectl get pods -owide
+      - make build e2e-tests
