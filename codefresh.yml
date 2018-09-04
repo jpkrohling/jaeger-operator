@@ -5,4 +5,4 @@ steps:
     title: 'Get pods from cluster integrated in Codefresh'
     image: jpkroehling/kube-helm:latest
     commands:
-      - make e2e-tests
+      - make es e2e-tests
