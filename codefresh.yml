@@ -5,4 +5,6 @@ steps:
     title: 'Get pods from cluster integrated in Codefresh'
     image: jpkroehling/kube-helm:latest
     commands:
+      - kubectl config get-contexts
+      - kubectl get pods -owide
       - make es e2e-tests
