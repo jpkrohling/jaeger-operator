@@ -6,5 +6,7 @@ steps:
     image: jpkroehling/kube-helm:latest
     commands:
       - kubectl config get-contexts
+      - kubectl config use-context "jpkroehling-jaeger-operator-master@Jaeger Operator"
+      - kubectl config get-contexts
       - kubectl get pods -owide
       - make es e2e-tests
