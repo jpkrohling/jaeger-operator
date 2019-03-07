@@ -18,6 +18,8 @@ STORAGE_NAMESPACE ?= "storage"
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
 PACKAGES := $(shell go list ./cmd/... ./pkg/...)
 
+OPERATOR_FLAGS ?= ""
+
 .DEFAULT_GOAL := build
 
 .PHONY: check
@@ -96,7 +98,14 @@ e2e-tests-es: prepare-e2e-tests es
 
 .PHONY: run
 run: crd
-	@bash -c 'trap "exit 0" INT; OPERATOR_NAME=${OPERATOR_NAME} KUBERNETES_CONFIG=${KUBERNETES_CONFIG} WATCH_NAMESPACE=${WATCH_NAMESPACE} go run -ldflags ${LD_FLAGS} main.go start'
+	@bash -c 'trap "exit 0" INT; OPERATOR_NAME=${OPERATOR_NAME} KUBERNETES_CONFIG=${KUBERNETES_CONFIG} WATCH_NAMESPACE=${WATCH_NAMESPACE} go run -ldflags ${LD_FLAGS} main.go start ${OPERATOR_FLAGS}'
+
+.PHONY: run-debug
+run-debug: set-debug run
+
+.PHONY: set-debug
+set-debug: 
+    OPERATOR_FLAGS="--log-level=debug"
 
 .PHONY: es
 es: storage
