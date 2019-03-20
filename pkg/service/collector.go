@@ -9,10 +9,27 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-// NewCollectorService returns a new Kubernetes service for Jaeger Collector backed by the pods matching the selector
-func NewCollectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
-	trueVar := true
+// NewCollectorServices returns a new Kubernetes service for Jaeger Collector backed by the pods matching the selector
+func NewCollectorServices(jaeger *v1.Jaeger, selector map[string]string) []*corev1.Service {
+	return []*corev1.Service{
+		headlessCollectorService(jaeger, selector),
+		nonHeadlessCollectorService(jaeger, selector),
+	}
+}
 
+func headlessCollectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
+	return collectorService(jaeger, selector)
+}
+
+func nonHeadlessCollectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
+	svc := collectorService(jaeger, selector)
+	svc.Name = svc.Name + "-lb"
+	svc.Spec.ClusterIP = ""
+	return svc
+}
+
+func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
+	trueVar := true
 	return &corev1.Service{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",
@@ -62,6 +79,7 @@ func NewCollectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.
 			},
 		},
 	}
+
 }
 
 // GetNameForCollectorService returns the service name for the collector in this Jaeger instance

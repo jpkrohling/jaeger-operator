@@ -14,7 +14,9 @@ func TestCollectorServiceNameAndPorts(t *testing.T) {
 	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "collector"}
 
 	jaeger := v1.NewJaeger(name)
-	svc := NewCollectorService(jaeger, selector)
+	svcs := NewCollectorServices(jaeger, selector)
+
+	svc := svcs[0]
 	assert.Equal(t, svc.ObjectMeta.Name, fmt.Sprintf("%s-collector", name))
 
 	ports := map[int32]bool{
@@ -32,4 +34,19 @@ func TestCollectorServiceNameAndPorts(t *testing.T) {
 		assert.Equal(t, v, true, "Expected port %v to be specified, but wasn't", k)
 	}
 
+}
+
+func TestCollectorServiceWithClusterIPEmptyAndNone(t *testing.T) {
+	name := "TestCollectorServiceWithClusterIP"
+	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "collector"}
+
+	jaeger := v1.NewJaeger(name)
+	svcs := NewCollectorServices(jaeger, selector)
+
+	// we want two services, one headless (load balanced by the client, possibly via DNS)
+	// and one with a cluster IP (load balanced by kube-proxy)
+	assert.Len(t, svcs, 2)
+	assert.NotEqual(t, svcs[0].Name, svcs[1].Name) // they can't have the same name
+	assert.Equal(t, "None", svcs[0].Spec.ClusterIP)
+	assert.Len(t, svcs[1].Spec.ClusterIP, 0)
 }

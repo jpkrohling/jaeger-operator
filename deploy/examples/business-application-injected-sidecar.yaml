@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: myapp
   annotations:
-    "sidecar.jaegertracing.io/inject": "true"
+    "sidecar.jaegertracing.io/inject": "false"
 spec:
   selector:
     matchLabels:
@@ -16,5 +16,7 @@ spec:
       containers:
       - name: myapp
         image: jaegertracing/vertx-create-span:operator-e2e-tests
-
+        env:
+        - name: JAEGER_ENDPOINT
+          value: "http://simple-prod-collector-lb.myproject:14268/api/traces"
 

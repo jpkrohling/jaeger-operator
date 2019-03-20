@@ -5,6 +5,13 @@ metadata:
   name: simple-prod
 spec:
   strategy: production
+  collector:
+    replicas: 2
+    options:
+      log-level: debug
+  agent:
+    options:
+      log-level: debug
   storage:
     type: elasticsearch
     options:
