@@ -96,6 +96,18 @@ oc create \
 
 After the role is granted, switch back to a non-privileged user.
 
+=== Operator Lifecycle Manager
+
+[source,bash]
+----
+kubectl apply -f deploy/role_olm.yaml
+kubectl apply -f deploy/role_binding_olm.yaml
+kubectl apply -f deploy/service_account_olm.yaml
+kubectl apply -f deploy/crds/jaegertracing_v1_jaeger_crd.yaml
+kubectl apply -f deploy/olm-catalog/jaeger-operator.csv.yaml
+----
+
+
 == Creating a new Jaeger instance
 
 Example custom resources, for different configurations of Jaeger, can be found https://github.com/jaegertracing/jaeger-operator/tree/master/deploy/examples[here].
