@@ -11,4 +11,6 @@ jobs:
         operator-sdk-version: v0.11.0
 
     - name: "basic checks"
+      env:
+        CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
       run: ./.ci/script.sh

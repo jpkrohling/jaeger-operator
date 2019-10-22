@@ -3,6 +3,8 @@ build/_output
 build/_test
 deploy/test
 vendor
+cc-test-reporter
+c.out
 
 # Created by https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
 ### Emacs ###
