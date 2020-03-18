@@ -60,7 +60,7 @@ security:
 	@${GOPATH}/bin/gosec -quiet -exclude=G104 ./... 2>/dev/null
 
 .PHONY: build
-build: format
+build:
 	@echo Building...
 	@${GO_FLAGS} go build -o $(OUTPUT_BINARY) -ldflags $(LD_FLAGS)
 
