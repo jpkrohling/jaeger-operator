@@ -396,7 +396,7 @@ func findRoute(t *testing.T, f *framework.Framework, name string) *osv1.Route {
 	return nil
 }
 
-func getQueryURL(jaegerInstanceName, urlPattern string) (url string) {
+func getQueryURL(jaegerInstanceName, namespace, urlPattern string) (url string) {
 	if isOpenShift(t) {
 		route := findRoute(t, fw, jaegerInstanceName)
 		require.Len(t, route.Status.Ingress, 1, "Wrong number of ingresses.")
@@ -428,7 +428,7 @@ func getHTTPCLient(insecure bool) (httpClient http.Client) {
 }
 
 func getQueryURLAndHTTPClient(jaegerInstanceName, urlPattern string, insecure bool) (string, http.Client) {
-	url := getQueryURL(jaegerInstanceName, urlPattern)
+	url := getQueryURL(jaegerInstanceName, namespace, urlPattern)
 	httpClient := getHTTPCLient(insecure)
 
 	return url, httpClient
