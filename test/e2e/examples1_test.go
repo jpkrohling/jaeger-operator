@@ -3,7 +3,6 @@
 package e2e
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -23,9 +22,7 @@ import (
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
@@ -117,9 +114,10 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 		t.Skip("Skipping until issue #974 is fixed")
 	}
 	// First deploy a Jaeger instance
-	jaegerInstance := createJaegerInstanceFromFile("simplest", "../../deploy/examples/simplest.yaml")
+	jaegerInstanceName := "simplest"
+	jaegerInstance := createJaegerInstanceFromFile(jaegerInstanceName, "../../deploy/examples/simplest.yaml")
 	defer undeployJaegerInstance(jaegerInstance)
-	err := WaitForDeployment(t, fw.KubeClient, namespace, "simplest", 1, retryInterval, timeout+(1*time.Minute))
+	err := WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName, 1, retryInterval, timeout+(1*time.Minute))
 	require.NoError(t, err)
 
 	// Now deploy deploy/examples/business-application-injected-sidecar.yaml
@@ -128,7 +126,8 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 	if err != nil && !strings.Contains(string(output), "AlreadyExists") {
 		require.NoError(t, err, "Failed creating Jaeger instance with: [%s]\n", string(output))
 	}
-	err = WaitForDeployment(t, fw.KubeClient, namespace, "myapp", 1, retryInterval, timeout)
+	const vertxDeploymentName = "myapp"
+	err = WaitForDeployment(t, fw.KubeClient, namespace, vertxDeploymentName, 1, retryInterval, timeout)
 	require.NoError(t, err, "Failed waiting for myapp deployment")
 
 	// Add a liveliness probe to create some traces
