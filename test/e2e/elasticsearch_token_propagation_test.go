@@ -7,11 +7,11 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	//"io/ioutil"
 	"net/http"
-	"strings"
+	//"strings"
 	"testing"
-	"time"
+	//"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -19,7 +19,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/uber/jaeger-client-go/config"
+	//"github.com/uber/jaeger-client-go/config"
 	corev1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
