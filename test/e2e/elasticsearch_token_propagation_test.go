@@ -7,11 +7,11 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	//"io/ioutil"
+	"io/ioutil"
 	"net/http"
-	//"strings"
+	"strings"
 	"testing"
-	//"time"
+	"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -19,7 +19,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	//"github.com/uber/jaeger-client-go/config"
+	"github.com/uber/jaeger-client-go/config"
 	corev1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -138,9 +138,8 @@ func (suite *TokenTestSuite) TestTokenPropagationNoToken() {
 	require.NoError(t, err, "Token propagation test failed")
 }
 
-//func (suite *TokenTestSuite) TestTokenPropagationValidToken() {
+func (suite *TokenTestSuite) TestTokenPropagationValidToken() {
 	/* Create an span */
-	/*
 	portForwColl, closeChanColl := CreatePortForward(namespace, suite.collectorName, collectorPodImageName, []string{"0:14268"}, fw.KubeConfig)
 	defer portForwColl.Close()
 	defer close(closeChanColl)
@@ -164,9 +163,7 @@ func (suite *TokenTestSuite) TestTokenPropagationNoToken() {
 		Finish()
 	closer.Close()
 	client := newHTTPSClient()
-	*/
 	/* Try to reach query endpoint */
-	/*
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		req, err := http.NewRequest(http.MethodGet, suite.queryServiceEndPoint, nil)
 		if err != nil {
@@ -191,7 +188,6 @@ func (suite *TokenTestSuite) TestTokenPropagationNoToken() {
 	})
 	require.NoError(t, err, "Token propagation test failed")
 }
-*/
 
 func (suite *TokenTestSuite) deployJaegerWithPropagationEnabled() {
 	queryName := fmt.Sprintf("%s-query", name)
