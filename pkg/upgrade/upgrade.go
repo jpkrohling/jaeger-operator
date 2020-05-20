@@ -83,6 +83,11 @@ func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger
 	ctx, span := tracer.Start(ctx, "ManagedInstance")
 	defer span.End()
 
+	if jaeger.Status.Version == "" {
+		// Set to first product version - 1.13.1 didn't set the Status.Version field
+		jaeger.Status.Version = "1.13.1";
+	}
+
 	if v, ok := versions[jaeger.Status.Version]; ok {
 		// we don't need to run the upgrade function for the version 'v', only the next ones
 		for n := v.next; n != nil; n = n.next {
@@ -96,6 +101,11 @@ func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger
 				}).WithError(err).Warn("failed to upgrade managed instance")
 				return jaeger, tracing.HandleError(err, span)
 			}
+			log.WithFields(log.Fields{
+				"instance":  jaeger.Name,
+				"namespace": jaeger.Namespace,
+				"to":        n.v,
+			}).Info("Upgraded managed instance")
 
 			upgraded.Status.Version = n.v
 			jaeger = upgraded
