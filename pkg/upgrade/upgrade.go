@@ -43,6 +43,10 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 		}
 	}
 
+	log.WithFields(log.Fields{
+		"instances": list.Items,
+	}).Debug("Jaeger instances to upgrade")
+
 	for _, j := range list.Items {
 		// this check shouldn't have been necessary, as I'd expect the list of items to come filtered out already
 		// but apparently, at least the fake client used in the unit tests doesn't filter it out... so, let's double-check
@@ -58,12 +62,22 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 
 		jaeger, err := ManagedInstance(ctx, c, j)
 		if err != nil {
+			log.WithFields(log.Fields{
+				"instance":  jaeger.Name,
+				"namespace": jaeger.Namespace,
+			}).WithError(err).Debug("Nothing to do at this level, just go to the next instance")
+
 			// nothing to do at this level, just go to the next instance
 			continue
 		}
 
 		if !reflect.DeepEqual(jaeger, j) {
 			// the CR has changed, store it!
+			log.WithFields(log.Fields{
+				"instance":  jaeger.Name,
+				"namespace": jaeger.Namespace,
+			}).Debug("CR has changed, so will store it")
+
 			if err := c.Update(ctx, &jaeger); err != nil {
 				log.WithFields(log.Fields{
 					"instance":  jaeger.Name,
@@ -71,6 +85,11 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 				}).WithError(err).Error("failed to store the upgraded instance")
 				tracing.HandleError(err, span)
 			}
+		} else {
+			log.WithFields(log.Fields{
+				"instance":  jaeger.Name,
+				"namespace": jaeger.Namespace,
+			}).Debug("No changes detected")
 		}
 	}
 
@@ -86,12 +105,31 @@ func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger
 	if jaeger.Status.Version == "" {
 		// Set to first product version - 1.13.1 didn't set the Status.Version field
 		jaeger.Status.Version = "1.13.1";
+
+		log.WithFields(log.Fields{
+			"instance":  jaeger.Name,
+			"namespace": jaeger.Namespace,
+			"version": jaeger.Status.Version,
+		}).Debug("Instance version not set, so defaulting to 1.13.1")
 	}
+
+	log.WithFields(log.Fields{
+		"instance":  jaeger.Name,
+		"namespace": jaeger.Namespace,
+		"version": jaeger.Status.Version,
+	}).Debug("Upgrading instance")
 
 	if v, ok := versions[jaeger.Status.Version]; ok {
 		// we don't need to run the upgrade function for the version 'v', only the next ones
 		for n := v.next; n != nil; n = n.next {
 			// performs the upgrade to version 'n'
+			log.WithFields(log.Fields{
+				"instance":  jaeger.Name,
+				"namespace": jaeger.Namespace,
+				"current": jaeger.Status.Version,
+				"next": n.v,
+			}).Debug("Performing the upgrade to next version")
+
 			upgraded, err := n.upgrade(ctx, client, jaeger)
 			if err != nil {
 				log.WithFields(log.Fields{
