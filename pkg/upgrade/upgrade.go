@@ -20,12 +20,17 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 	ctx, span := tracer.Start(ctx, "ManagedInstances")
 	defer span.End()
 
+	log.Debug("Checking for Jaeger instances to be upgraded ...")
+
 	list := &v1.JaegerList{}
-	identity := viper.GetString(v1.ConfigIdentity)
+	// Related to https://issues.redhat.com/browse/TRACING-1143
+	// Matching label commented out as was not picking up 1.13.1 jaeger instances.
+	// Jaeger operator is cluster-wide, so only one operator will be managing all instances currently.
+	//identity := viper.GetString(v1.ConfigIdentity)
 	opts := []client.ListOption{
-		client.MatchingLabels(map[string]string{
-			v1.LabelOperatedBy: identity,
-		}),
+		//client.MatchingLabels(map[string]string{
+		//	v1.LabelOperatedBy: identity,
+		//}),
 	}
 
 	if watchNamespaces := viper.GetString(v1.ConfigWatchNamespace); watchNamespaces != v1.WatchAllNamespaces {
@@ -43,14 +48,15 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 		}
 	}
 
-	log.WithFields(log.Fields{
-		"instances": list.Items,
-	}).Debug("Jaeger instances to upgrade")
-
 	for _, j := range list.Items {
 		// this check shouldn't have been necessary, as I'd expect the list of items to come filtered out already
 		// but apparently, at least the fake client used in the unit tests doesn't filter it out... so, let's double-check
 		// that we indeed own the item
+
+		// Related to https://issues.redhat.com/browse/TRACING-1143
+		// Matching label commented out as was not picking up 1.13.1 jaeger instances.
+		// Jaeger operator is cluster-wide, so only one operator will be managing all instances currently.
+		/*
 		owner := j.Labels[v1.LabelOperatedBy]
 		if owner != identity {
 			log.WithFields(log.Fields{
@@ -59,6 +65,7 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 			}).Debug("skipping CR upgrade as we are not owners")
 			continue
 		}
+		*/
 
 		jaeger, err := ManagedInstance(ctx, c, j)
 		if err != nil {
@@ -76,6 +83,7 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 			log.WithFields(log.Fields{
 				"instance":  jaeger.Name,
 				"namespace": jaeger.Namespace,
+				"newVersion": jaeger.Status.Version,
 			}).Debug("CR has changed, so will store it")
 
 			if err := c.Update(ctx, &jaeger); err != nil {
@@ -92,6 +100,8 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 			}).Debug("No changes detected")
 		}
 	}
+
+	log.Debug("Upgrade check completed")
 
 	return nil
 }

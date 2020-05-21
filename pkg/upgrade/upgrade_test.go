@@ -115,6 +115,11 @@ func TestUnknownVersion(t *testing.T) {
 }
 
 func TestSkipForNonOwnedInstances(t *testing.T) {
+	// Related to https://issues.redhat.com/browse/TRACING-1143
+	// Matching label commented out as was not picking up 1.13.1 jaeger instances.
+	// Jaeger operator is cluster-wide, so only one operator will be managing all instances currently.
+	t.Skip("Skipping this test, as have removed checking of 'operated-by' label to be able to locate Jaeger 1.13.1 instances")
+
 	// prepare
 	viper.Set(v1.ConfigIdentity, "the-identity")
 	defer viper.Reset()
