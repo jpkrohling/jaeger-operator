@@ -5,8 +5,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
@@ -173,17 +171,10 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Agent.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
 
-	// Use a different common spec for volumes and mounts.
-	// We don't want to mount all Jaeger internal volumes into user's deployments
-	volumesAndMountsSpec := &v1.JaegerCommonSpec{}
-
-	ca.Update(jaeger, volumesAndMountsSpec)
-
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(args)
 
-	dep.Spec.Template.Spec.Volumes = util.RemoveDuplicatedVolumes(append(dep.Spec.Template.Spec.Volumes, volumesAndMountsSpec.Volumes...))
 	return corev1.Container{
 		Image: util.ImageName(jaeger.Spec.Agent.Image, "jaeger-agent-image"),
 		Name:  "jaeger-agent",
@@ -232,7 +223,6 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 			},
 		},
 		Resources: commonSpec.Resources,
-		VolumeMounts: volumesAndMountsSpec.VolumeMounts,
 	}
 }
 
