@@ -25,9 +25,10 @@ var (
 	v1_17_0 = version{v: "1.17.0", upgrade: upgrade1_17_0, next: &v1_17_1}
 	v1_17_1 = version{v: "1.17.1", upgrade: noop, next: &v1_17_2}
 	v1_17_2 = version{v: "1.17.2", upgrade: noop, next: &v1_17_3}
-	v1_17_3 = version{v: "1.17.3", upgrade: upgrade1_17_3}
+	v1_17_3 = version{v: "1.17.3", upgrade: upgrade1_17_3, next: &v1_17_4}
+	v1_17_4 = version{v: "1.17.4", upgrade: noop}
 
-	latest = &v1_17_3
+	latest = &v1_17_4
 
 	versions = map[string]version{
 		v1_11_0.v: v1_11_0,
@@ -41,6 +42,7 @@ var (
 		v1_17_1.v: v1_17_1,
 		v1_17_2.v: v1_17_2,
 		v1_17_3.v: v1_17_3,
+		v1_17_4.v: v1_17_4,
 	}
 )
 
