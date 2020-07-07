@@ -18,9 +18,11 @@ KAFKA_NAMESPACE ?= "kafka"
 KAFKA_EXAMPLE ?= "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/0.16.2/examples/kafka/kafka-persistent-single.yaml"
 KAFKA_YAML ?= "https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.16.2/strimzi-cluster-operator-0.16.2.yaml"
 ES_OPERATOR_NAMESPACE ?= openshift-logging
-ES_OPERATOR_BRANCH ?= release-4.3
-PROMETHEUS_OPERATOR_TAG ?= v0.34.0
-ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.3
+ES_OPERATOR_BRANCH ?= release-4.4
+PROMETHEUS_OPERATOR_TAG ?= v0.39.0
+PROMETHEUS_RULES_CRD ?= https://raw.githubusercontent.com/coreos/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml
+PROMETHEUS_SERVICE_MONITORS_CRD ?= https://raw.githubusercontent.com/coreos/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
+ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.4
 SDK_VERSION=v0.15.1
 GOPATH ?= "$(HOME)/go"
 
@@ -176,8 +178,8 @@ ifeq ($(OLM),true)
 	@echo Skipping es-operator deployment, assuming it has been installed via OperatorHub
 else
 	@kubectl create namespace ${ES_OPERATOR_NAMESPACE} 2>&1 | grep -v "already exists" || true
-	@kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/example/prometheus-operator-crd/prometheusrule.crd.yaml
-	@kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/example/prometheus-operator-crd/servicemonitor.crd.yaml
+	@kubectl apply -f ${PROMETHEUS_RULES_CRD}
+	@kubectl apply -f ${PROMETHEUS_SERVICE_MONITORS_CRD}
 	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/01-service-account.yaml -n ${ES_OPERATOR_NAMESPACE}
 	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/02-role.yaml
 	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/03-role-bindings.yaml
@@ -196,8 +198,8 @@ else
 	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/03-role-bindings.yaml --ignore-not-found=true || true
 	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/02-role.yaml --ignore-not-found=true || true
 	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/01-service-account.yaml -n ${ES_OPERATOR_NAMESPACE} --ignore-not-found=true || true
-	@kubectl delete -f https://raw.githubusercontent.com/coreos/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/example/prometheus-operator-crd/servicemonitor.crd.yaml --ignore-not-found=true || true
-	@kubectl delete -f https://raw.githubusercontent.com/coreos/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/example/prometheus-operator-crd/prometheusrule.crd.yaml --ignore-not-found=true || true
+	@kubectl delete -f ${PROMETHEUS_SERVICE_MONITORS_CRD} --ignore-not-found=true || true
+	@kubectl delete -f ${PROMETHEUS_RULES_CRD} --ignore-not-found=true || true
 	@kubectl delete namespace ${ES_OPERATOR_NAMESPACE} --ignore-not-found=true 2>&1 || true
 endif
 
