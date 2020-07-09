@@ -59,6 +59,11 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		c.configMaps = append(c.configMaps, *cm)
 	}
 
+	// add the service CA config map
+	if cm := ca.GetServiceCABundle(jaeger); cm != nil {
+		c.configMaps = append(c.configMaps, *cm)
+	}
+
 	// add the daemonsets
 	if ds := agent.Get(); ds != nil {
 		c.daemonSets = []appsv1.DaemonSet{*ds}

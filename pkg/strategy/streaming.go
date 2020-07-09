@@ -62,6 +62,11 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		manifest.configMaps = append(manifest.configMaps, *cm)
 	}
 
+	// add the service CA config map
+	if cm := ca.GetServiceCABundle(jaeger); cm != nil {
+		manifest.configMaps = append(manifest.configMaps, *cm)
+	}
+
 	_, pfound := jaeger.Spec.Collector.Options.GenericMap()["kafka.producer.brokers"]
 	_, cfound := jaeger.Spec.Ingester.Options.GenericMap()["kafka.consumer.brokers"]
 	provisioned := jaeger.Annotations[v1.AnnotationProvisionedKafkaKey] == v1.AnnotationProvisionedKafkaValue

@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -14,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -31,7 +33,7 @@ func reset() {
 }
 
 func TestInjectSidecar(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecar"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	dep := dep(map[string]string{}, map[string]string{})
 	dep = Sidecar(jaeger, dep)
 	assert.Equal(t, dep.Labels[Label], jaeger.Name)
@@ -46,20 +48,20 @@ func TestInjectSidecarOpenShift(t *testing.T) {
 	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer reset()
 
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarOpenShift"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	dep := dep(map[string]string{}, map[string]string{})
 	dep = Sidecar(jaeger, dep)
 	assert.Equal(t, dep.Labels[Label], jaeger.Name)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 0)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, 1)
-	assert.Len(t, dep.Spec.Template.Spec.Volumes, 1)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, 2)
+	assert.Len(t, dep.Spec.Template.Spec.Volumes, 2)
 }
 
 func TestInjectSidecarWithEnvVars(t *testing.T) {
 	// prepare
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarWithEnvVars"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{"app": "testapp"})
 
 	// test
@@ -78,7 +80,7 @@ func TestInjectSidecarWithEnvVars(t *testing.T) {
 
 func TestInjectSidecarWithEnvVarsK8sAppName(t *testing.T) {
 	// prepare
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarWithEnvVarsK8sAppName"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	dep := dep(map[string]string{}, map[string]string{
 		"app":                    "noapp",
 		"app.kubernetes.io/name": "testapp",
@@ -95,7 +97,7 @@ func TestInjectSidecarWithEnvVarsK8sAppName(t *testing.T) {
 
 func TestInjectSidecarWithEnvVarsK8sAppInstance(t *testing.T) {
 	// prepare
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarWithEnvVarsK8sAppInstance"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	dep := dep(map[string]string{}, map[string]string{
 		"app":                        "noapp",
 		"app.kubernetes.io/name":     "noname",
@@ -113,7 +115,7 @@ func TestInjectSidecarWithEnvVarsK8sAppInstance(t *testing.T) {
 
 func TestInjectSidecarWithEnvVarsWithNamespace(t *testing.T) {
 	// prepare
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarWithEnvVarsWithNamespace"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	dep := dep(map[string]string{}, map[string]string{"app": "testapp"})
 	dep.Namespace = "mynamespace"
 
@@ -131,7 +133,7 @@ func TestInjectSidecarWithEnvVarsWithNamespace(t *testing.T) {
 
 func TestInjectSidecarWithEnvVarsOverrideName(t *testing.T) {
 	// prepare
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarWithEnvVarsOverrideName"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	dep := dep(map[string]string{}, map[string]string{"app": "testapp"})
 	envVar := corev1.EnvVar{
 		Name:  envVarServiceName,
@@ -153,7 +155,7 @@ func TestInjectSidecarWithEnvVarsOverrideName(t *testing.T) {
 
 func TestInjectSidecarWithEnvVarsOverridePropagation(t *testing.T) {
 	// prepare
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarWithEnvVarsOverridePropagation"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	traceContextEnvVar := corev1.EnvVar{
 		Name:  envVarPropagation,
 		Value: "tracecontext",
@@ -175,7 +177,7 @@ func TestInjectSidecarWithEnvVarsOverridePropagation(t *testing.T) {
 
 func TestSidecarDefaultPorts(t *testing.T) {
 	// prepare
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSidecarPorts"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	dep := dep(map[string]string{}, map[string]string{"app": "testapp"})
 
 	// test
@@ -195,7 +197,7 @@ func TestSidecarDefaultPorts(t *testing.T) {
 
 func TestSkipInjectSidecar(t *testing.T) {
 	// prepare
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSkipInjectSidecar"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	dep := dep(map[string]string{}, map[string]string{Label: "non-existing-operator"})
 
 	// test
@@ -357,12 +359,12 @@ func TestSelectBasedOnName(t *testing.T) {
 
 	jaegerPods := &v1.JaegerList{
 		Items: []v1.Jaeger{
-			v1.Jaeger{
+			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "the-first-jaeger-instance-available",
 				},
 			},
-			v1.Jaeger{
+			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "the-second-jaeger-instance-available",
 				},
@@ -377,7 +379,7 @@ func TestSelectBasedOnName(t *testing.T) {
 }
 
 func TestSidecarOrderOfArguments(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryOrderOfArguments"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
 		"b-option": "b-value",
 		"a-option": "a-value",
@@ -401,7 +403,7 @@ func TestSidecarOrderOfArguments(t *testing.T) {
 
 func TestSidecarExplicitTags(t *testing.T) {
 	// prepare
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSidecarExplicitTags"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{"jaeger.tags": "key=val"})
 	dep := dep(map[string]string{}, map[string]string{})
 
@@ -415,7 +417,7 @@ func TestSidecarExplicitTags(t *testing.T) {
 }
 
 func TestSidecarOverrideReporter(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryOrderOfArguments"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
 		"reporter.type":             "thrift",
 		"reporter.thrift.host-port": "collector:14267",
@@ -431,7 +433,7 @@ func TestSidecarOverrideReporter(t *testing.T) {
 }
 
 func TestSidecarAgentResources(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSidecarAgentResources"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Resources = corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
 			corev1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
@@ -467,7 +469,7 @@ func TestSidecarAgentResources(t *testing.T) {
 }
 
 func TestCleanSidecars(t *testing.T) {
-	instanceName := "TestCleanSideCars"
+	instanceName := "my-instance"
 	nsn := types.NamespacedName{
 		Name:      instanceName,
 		Namespace: "Test",
@@ -482,32 +484,39 @@ func TestCleanSidecars(t *testing.T) {
 }
 
 func TestCleanSidecarsOpenShift(t *testing.T) {
+	// prepare
 	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
 
-	instanceName := "TestCleanSidecarsOpenShift"
+	instanceName := "my-instance"
 	nsn := types.NamespacedName{
 		Name:      instanceName,
 		Namespace: "Test",
 	}
 	jaeger := v1.NewJaeger(nsn)
 	dep1 := Sidecar(jaeger, dep(map[string]string{}, map[string]string{}))
-	assert.Equal(t, 2, len(dep1.Spec.Template.Spec.Containers))
-	assert.Equal(t, 1, len(dep1.Spec.Template.Spec.Volumes))
+
+	// sanity check
+	require.Equal(t, 2, len(dep1.Spec.Template.Spec.Containers))
+	require.Equal(t, 2, len(dep1.Spec.Template.Spec.Volumes))
+
+	// test
 	CleanSidecar(instanceName, dep1)
+
+	// verify
 	assert.Equal(t, 1, len(dep1.Spec.Template.Spec.Containers))
 	assert.Equal(t, 0, len(dep1.Spec.Template.Spec.Volumes))
 }
 
 func TestSidecarWithLabel(t *testing.T) {
 	nsn := types.NamespacedName{
-		Name:      "TestSidecarWithLabel",
+		Name:      "my-instance",
 		Namespace: "Test",
 	}
 	jaeger := v1.NewJaeger(nsn)
 	dep1 := dep(map[string]string{}, map[string]string{})
 	dep1 = Sidecar(jaeger, dep1)
-	assert.Equal(t, dep1.Labels[Label], "TestSidecarWithLabel")
+	assert.Equal(t, dep1.Labels[Label], "my-instance")
 	dep2 := dep(map[string]string{}, map[string]string{})
 	dep2.Labels = map[string]string{"anotherLabel": "anotherValue"}
 	dep2 = Sidecar(jaeger, dep2)
@@ -518,7 +527,7 @@ func TestSidecarWithLabel(t *testing.T) {
 
 func TestSidecarWithoutPrometheusAnnotations(t *testing.T) {
 	// prepare
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSidecarWithoutPrometheusAnnotations"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	dep := Sidecar(jaeger, dep(map[string]string{}, map[string]string{}))
 
 	// test
@@ -531,7 +540,7 @@ func TestSidecarWithoutPrometheusAnnotations(t *testing.T) {
 
 func TestSidecarWithPrometheusAnnotations(t *testing.T) {
 	// prepare
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSidecarWithPrometheusAnnotations"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	dep := dep(map[string]string{
 		"prometheus.io/scrape": "false",
 		"prometheus.io/port":   "9090",
@@ -546,7 +555,7 @@ func TestSidecarWithPrometheusAnnotations(t *testing.T) {
 }
 
 func TestSidecarAgentTagsWithMultipleContainers(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSidecarAgentTagsWithMultipleContainers"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	dep := Sidecar(jaeger, depWithTwoContainers(map[string]string{}, map[string]string{}))
 
 	assert.Equal(t, dep.Labels[Label], jaeger.Name)
@@ -578,11 +587,9 @@ func dep(annotations map[string]string, labels map[string]string) *appsv1.Deploy
 					Labels: labels,
 				},
 				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						corev1.Container{
-							Name: "only_container",
-						},
-					},
+					Containers: []corev1.Container{{
+						Name: "only_container",
+					}},
 				},
 			},
 		},
@@ -632,7 +639,7 @@ func TestSidecarArgumentsOpenshiftTLS(t *testing.T) {
 	defer viper.Reset()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{
-		Name:      "TestQueryOrderOfArguments",
+		Name:      "my-instance",
 		Namespace: "test",
 	})
 	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
@@ -647,9 +654,22 @@ func TestSidecarArgumentsOpenshiftTLS(t *testing.T) {
 	assert.Greater(t, len(util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--jaeger.tags", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.type=grpc", dep.Spec.Template.Spec.Containers[1].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.host-port=dns:///testqueryorderofarguments-collector-headless.test.svc:14250", dep.Spec.Template.Spec.Containers[1].Args)), 0)
+	assert.Greater(t, len(util.FindItem("--reporter.grpc.host-port=dns:///my-instance-collector-headless.test.svc:14250", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[1].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.ca=/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt", dep.Spec.Template.Spec.Containers[1].Args)), 0)
+	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.ca="+ca.ServiceCAPath, dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	agentTags := agentTags(dep.Spec.Template.Spec.Containers[1].Args)
 	assert.Contains(t, agentTags, "container.name=only_container")
+}
+
+func TestInjectSidecarOnOpenShift(t *testing.T) {
+	viper.Set("platform", v1.FlagPlatformOpenShift)
+	defer viper.Reset()
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	dep := dep(map[string]string{}, map[string]string{})
+	dep = Sidecar(jaeger, dep)
+	assert.Equal(t, dep.Labels[Label], jaeger.Name)
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, 2)
+	assert.Len(t, dep.Spec.Template.Spec.Volumes, 2)
 }
