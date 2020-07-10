@@ -21,6 +21,7 @@ require (
 	go.opentelemetry.io/otel v0.1.2
 	go.opentelemetry.io/otel/exporter/trace/jaeger v0.1.2
 	golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271
+	golang.org/x/text v0.3.3 // indirect
 	golang.org/x/tools v0.0.0-20191205225056-3393d29bb9fe // indirect
 	google.golang.org/grpc v1.24.0
 	k8s.io/api v0.0.0
