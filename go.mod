@@ -20,6 +20,7 @@ require (
 	github.com/uber/jaeger-lib v2.2.0+incompatible // indirect
 	go.opentelemetry.io/otel v0.1.2
 	go.opentelemetry.io/otel/exporter/trace/jaeger v0.1.2
+	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899 // indirect
 	golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271
 	golang.org/x/text v0.3.3 // indirect
 	golang.org/x/tools v0.0.0-20191205225056-3393d29bb9fe // indirect
