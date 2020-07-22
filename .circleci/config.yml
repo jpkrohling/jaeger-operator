@@ -30,11 +30,11 @@ jobs:
 
       - run:
           command: >-
-            sudo mkdir -p /usr/local/go1.14.3 &&
-            curl -L https://golang.org/dl/go1.14.3.linux-amd64.tar.gz | sudo tar -xz -C /usr/local/go1.14.3 &&
-            sudo chown -R $(whoami): /usr/local/go1.14.3/go &&
-            echo "export PATH=$PATH:/usr/local/go1.14.3/go/bin" >> $BASH_ENV &&
-            echo "export GOROOT=/usr/local/go1.14.3/go" >> $BASH_ENV &&
+            sudo rm -rf /usr/local/go &&
+            curl -L https://golang.org/dl/go1.14.3.linux-amd64.tar.gz | sudo tar -xz -C /usr/local/ &&
+            sudo chown -R $(whoami) /usr/local/go &&
+            echo "export PATH=$PATH:/usr/local/go/bin" >> $BASH_ENV &&
+            echo "export GOROOT=/usr/local/go" >> $BASH_ENV &&
             go version
           name: Install recent go
       - run: 
