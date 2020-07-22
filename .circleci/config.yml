@@ -10,7 +10,7 @@ jobs:
             curl -L https://golang.org/dl/go1.14.3.linux-amd64.tar.gz | sudo tar -xz -C /usr/local/ &&
             sudo chown -R $(whoami): /usr/local/go &&
             echo "export PATH=$PATH:/usr/local/go/bin" >> $BASH_ENV &&
-            echo "export GOROOT=/usr/local/go" >> $BASH_ENV &&
+            go env >> $BASH_ENV &&
             go version
           name: Install recent go
 
@@ -33,6 +33,10 @@ jobs:
           command: >-
             sudo -E minikube start --vm-driver=none --kubernetes-version=v1.17.9 --wait=all --wait-timeout=5m
           name: Start minikube
+
+      - run: 
+          command: set
+          name: print out env vars
 
       - run: make install-sdk SDK_VERSION=0.18.2 
       - run: make install-tools
