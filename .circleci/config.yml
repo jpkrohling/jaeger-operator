@@ -11,7 +11,7 @@ jobs:
             curl -L https://golang.org/dl/go1.14.3.linux-amd64.tar.gz | sudo tar -xz -C /usr/local/go1.14.3 &&
             sudo chown -R $(whoami): /usr/local/go1.14.3/go &&
             echo "export PATH=$PATH:/usr/local/go1.14.3/go/bin" >> $BASH_ENV &&
-            go env >> $BASH_ENV &&
+            echo "export GOROOT=/usr/local/go1.14.3/go" >> $BASH_ENV &&
             go version
           name: Install recent go
 
