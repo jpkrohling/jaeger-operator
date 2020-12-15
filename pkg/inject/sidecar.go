@@ -69,17 +69,33 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	return dep
 }
 
-// Needed determines whether a pod needs to get a sidecar injected or not
-func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
+func Desired(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
+	logger := log.WithFields(log.Fields{
+		"namespace":  dep.Namespace,
+		"deployment": dep.Name,
+	})
 	_, depExist := dep.Annotations[Annotation]
 	_, nsExist := ns.Annotations[Annotation]
-	if !depExist && !nsExist {
-		log.WithFields(log.Fields{
-			"namespace":  dep.Namespace,
-			"deployment": dep.Name,
-		}).Trace("annotation not present, not injecting")
+
+	if depExist {
+		logger.Debug("annotation present on deployment")
+		return true
+	}
+
+	if nsExist {
+		logger.Debug("annotation present on namespace")
+		return true
+	}
+
+	return false
+}
+
+// Needed determines whether a pod needs to get a sidecar injected or not
+func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
+	if !Desired(dep, ns) {
 		return false
 	}
+
 	// do not inject jaeger due to port collision
 	// do not inject if deployment's Annotation value is false
 	if dep.Labels["app"] == "jaeger" {
